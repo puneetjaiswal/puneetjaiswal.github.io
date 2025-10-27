@@ -88,9 +88,20 @@
         .tab-content.active {
             display: block;
         }
-        #gameCanvas {
+        #snakeCanvas, #yantraCanvas {
             border: 1px solid #333;
             background: #000;
+            margin: 10px 0;
+        }
+        .game-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .game-section h3 {
+            margin-top: 0;
+            color: #333;
         }
     </style>
 </head>
@@ -102,36 +113,11 @@
     <div class="container">
         <div class="profile">
             <img src="https://avatars.githubusercontent.com/u/3338687?v=4" alt="Puneet Jaiswal">
-            <h2>About Me</h2>
-            <p>Based in Fremont, California. Passionate about big data, analytics, and open source software.</p>
-            <div class="social-links">
-                <a href="https://github.com/puneetjaiswal">GitHub</a>
-                <a href="https://twitter.com/puneetjaiswal">Twitter</a>
-                <a href="https://www.linkedin.com/in/puneetkjaiswal/">LinkedIn</a>
-            </div>
-        </div>
-        <div class="projects">
-            <h2>Featured Projects</h2>
-            <div class="project">
-                <h3>Apache Druid</h3>
-                <p>High-performance real-time analytics database. Contributor to the Apache Druid project.</p>
-                <a href="https://github.com/apache/druid">View Project</a>
-            </div>
-            <div class="project">
-                <h3>Apache Pinot</h3>
-                <p>Real-time distributed OLAP datastore. Active contributor to Apache Pinot.</p>
-                <a href="https://github.com/apache/pinot">View Project</a>
-            </div>
-            <div class="project">
-                <h3>Trino (formerly Presto)</h3>
-                <p>Distributed SQL query engine for big data. Contributor to Trino project.</p>
-                <a href="https://github.com/trinodb/trino">View Project</a>
-            </div>
         </div>
         <div class="tabs">
             <button class="tab-button active" onclick="openTab('about')">About Me</button>
             <button class="tab-button" onclick="openTab('projects')">Projects</button>
-            <button class="tab-button" onclick="openTab('game')">Snake Game</button>
+            <button class="tab-button" onclick="openTab('games')">Games</button>
         </div>
         <div id="about" class="tab-content active">
             <h2>About Me</h2>
@@ -142,11 +128,20 @@
                 <a href="https://www.linkedin.com/in/puneetkjaiswal/">LinkedIn</a>
             </div>
         </div>
-        <div id="game" class="tab-content">
-            <h2>Snake Game</h2>
-            <canvas id="gameCanvas" width="400" height="400"></canvas>
-            <p>Use arrow keys to control the snake. Eat the red food to grow!</p>
-            <p>Score: <span id="score">0</span></p>
+        <div id="games" class="tab-content">
+            <h2>Games</h2>
+            <div class="game-section">
+                <h3>Snake Game</h3>
+                <canvas id="snakeCanvas" width="400" height="400"></canvas>
+                <p>Use arrow keys to control the snake. Eat the red food to grow!</p>
+                <p>Score: <span id="snakeScore">0</span></p>
+            </div>
+            <div class="game-section">
+                <h3>Sri Yantra Fractal</h3>
+                <canvas id="yantraCanvas" width="400" height="400"></canvas>
+                <p>Sacred geometric pattern with animated visualization</p>
+                <button onclick="animateYantra()">Animate</button>
+            </div>
         </div>
         <div id="projects" class="tab-content">
             <h2>Featured Projects</h2>
@@ -186,12 +181,12 @@
         }
 
         // Snake Game
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const scoreElement = document.getElementById('score');
+        const snakeCanvas = document.getElementById('snakeCanvas');
+        const snakeCtx = snakeCanvas.getContext('2d');
+        const snakeScoreElement = document.getElementById('snakeScore');
 
         const gridSize = 20;
-        const tileCount = canvas.width / gridSize;
+        const tileCount = snakeCanvas.width / gridSize;
 
         let snake = [
             {x: 10, y: 10}
@@ -205,17 +200,17 @@
             return Math.floor(Math.random() * tileCount);
         }
 
-        function drawGame() {
-            ctx.fillStyle = 'black';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        function drawSnakeGame() {
+            snakeCtx.fillStyle = 'black';
+            snakeCtx.fillRect(0, 0, snakeCanvas.width, snakeCanvas.height);
 
-            ctx.fillStyle = 'green';
+            snakeCtx.fillStyle = 'green';
             for (let segment of snake) {
-                ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize - 2, gridSize - 2);
+                snakeCtx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize - 2, gridSize - 2);
             }
 
-            ctx.fillStyle = 'red';
-            ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
+            snakeCtx.fillStyle = 'red';
+            snakeCtx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
         }
 
         function moveSnake() {
@@ -224,7 +219,7 @@
 
             if (head.x === food.x && head.y === food.y) {
                 score += 10;
-                scoreElement.textContent = score;
+                snakeScoreElement.textContent = score;
                 generateFood();
             } else {
                 snake.pop();
@@ -251,18 +246,18 @@
             return false;
         }
 
-        function gameLoop() {
+        function snakeGameLoop() {
             if (checkCollision()) {
                 alert('Game Over! Score: ' + score);
                 snake = [{x: 10, y: 10}];
                 dx = 0;
                 dy = 0;
                 score = 0;
-                scoreElement.textContent = score;
+                snakeScoreElement.textContent = score;
                 generateFood();
             }
             moveSnake();
-            drawGame();
+            drawSnakeGame();
         }
 
         document.addEventListener('keydown', (e) => {
@@ -282,7 +277,75 @@
         });
 
         generateFood();
-        setInterval(gameLoop, 200);
+        setInterval(snakeGameLoop, 200);
+
+        // Sri Yantra Fractal
+        const yantraCanvas = document.getElementById('yantraCanvas');
+        const yantraCtx = yantraCanvas.getContext('2d');
+        let animationId;
+
+        function drawSriYantra() {
+            const centerX = yantraCanvas.width / 2;
+            const centerY = yantraCanvas.height / 2;
+            const size = 150;
+            let angle = 0;
+
+            function animate() {
+                yantraCtx.clearRect(0, 0, yantraCanvas.width, yantraCanvas.height);
+
+                // Draw outer square
+                yantraCtx.strokeStyle = '#ff6b35';
+                yantraCtx.lineWidth = 2;
+                yantraCtx.strokeRect(centerX - size, centerY - size, size * 2, size * 2);
+
+                // Draw inner triangles
+                for (let i = 0; i < 9; i++) {
+                    const triangleSize = size * (0.9 - i * 0.08);
+                    const offset = (size - triangleSize) / 2;
+
+                    yantraCtx.beginPath();
+                    yantraCtx.moveTo(centerX, centerY - triangleSize);
+                    yantraCtx.lineTo(centerX - triangleSize, centerY + triangleSize);
+                    yantraCtx.lineTo(centerX + triangleSize, centerY + triangleSize);
+                    yantraCtx.closePath();
+
+                    const hue = (angle * 10 + i * 40) % 360;
+                    yantraCtx.strokeStyle = `hsl(${hue}, 70%, 50%)`;
+                    yantraCtx.stroke();
+
+                    // Draw inverted triangles
+                    yantraCtx.beginPath();
+                    yantraCtx.moveTo(centerX, centerY + triangleSize);
+                    yantraCtx.lineTo(centerX - triangleSize, centerY - triangleSize);
+                    yantraCtx.lineTo(centerX + triangleSize, centerY - triangleSize);
+                    yantraCtx.closePath();
+
+                    yantraCtx.strokeStyle = `hsl(${(hue + 180) % 360}, 70%, 50%)`;
+                    yantraCtx.stroke();
+                }
+
+                // Draw central point
+                yantraCtx.fillStyle = '#ff6b35';
+                yantraCtx.beginPath();
+                yantraCtx.arc(centerX, centerY, 3, 0, Math.PI * 2);
+                yantraCtx.fill();
+
+                angle += 0.01;
+                animationId = requestAnimationFrame(animate);
+            }
+
+            animate();
+        }
+
+        function animateYantra() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            drawSriYantra();
+        }
+
+        // Initial static drawing
+        drawSriYantra();
     </script>
 </body>
 </html>
