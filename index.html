@@ -18,6 +18,9 @@
             padding: 20px;
             text-align: center;
         }
+        header h1, header h2 {
+            color: white;
+        }
         .container {
             max-width: 800px;
             margin: 20px auto;
@@ -137,7 +140,7 @@
                 <p>Score: <span id="snakeScore">0</span></p>
             </div>
             <div class="game-section">
-                <h3>Sri Yantra Fractal</h3>
+                <h3>Fractals</h3>
                 <canvas id="yantraCanvas" width="400" height="400"></canvas>
                 <p>Sacred geometric pattern with animated visualization</p>
                 <button onclick="animateYantra()">Animate</button>
@@ -279,7 +282,7 @@
         generateFood();
         setInterval(snakeGameLoop, 200);
 
-        // Sri Yantra Fractal
+        // Fractals
         const yantraCanvas = document.getElementById('yantraCanvas');
         const yantraCtx = yantraCanvas.getContext('2d');
         let animationId;
