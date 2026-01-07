@@ -18,6 +18,9 @@
             padding: 20px;
             text-align: center;
         }
+        header h1, header h2 {
+            color: white;
+        }
         .container {
             max-width: 800px;
             margin: 20px auto;
@@ -88,11 +91,7 @@
         .tab-content.active {
             display: block;
         }
-        #snakeCanvas, #yantraCanvas {
-            border: 1px solid #333;
-            background: #000;
-            margin: 10px 0;
-        }
+
         .game-section {
             margin-bottom: 30px;
             padding: 15px;
@@ -227,172 +226,7 @@
             event.currentTarget.classList.add("active");
         }
 
-        // Snake Game
-        const snakeCanvas = document.getElementById('snakeCanvas');
-        const snakeCtx = snakeCanvas.getContext('2d');
-        const snakeScoreElement = document.getElementById('snakeScore');
 
-        const gridSize = 20;
-        const tileCount = snakeCanvas.width / gridSize;
-
-        let snake = [
-            {x: 10, y: 10}
-        ];
-        let food = {};
-        let dx = 0;
-        let dy = 0;
-        let score = 0;
-
-        function randomTile() {
-            return Math.floor(Math.random() * tileCount);
-        }
-
-        function drawSnakeGame() {
-            snakeCtx.fillStyle = 'black';
-            snakeCtx.fillRect(0, 0, snakeCanvas.width, snakeCanvas.height);
-
-            snakeCtx.fillStyle = 'green';
-            for (let segment of snake) {
-                snakeCtx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize - 2, gridSize - 2);
-            }
-
-            snakeCtx.fillStyle = 'red';
-            snakeCtx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
-        }
-
-        function moveSnake() {
-            const head = {x: snake[0].x + dx, y: snake[0].y + dy};
-            snake.unshift(head);
-
-            if (head.x === food.x && head.y === food.y) {
-                score += 10;
-                snakeScoreElement.textContent = score;
-                generateFood();
-            } else {
-                snake.pop();
-            }
-        }
-
-        function generateFood() {
-            food = {
-                x: randomTile(),
-                y: randomTile()
-            };
-        }
-
-        function checkCollision() {
-            const head = snake[0];
-            if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
-                return true;
-            }
-            for (let i = 1; i < snake.length; i++) {
-                if (head.x === snake[i].x && head.y === snake[i].y) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        function snakeGameLoop() {
-            if (checkCollision()) {
-                alert('Game Over! Score: ' + score);
-                snake = [{x: 10, y: 10}];
-                dx = 0;
-                dy = 0;
-                score = 0;
-                snakeScoreElement.textContent = score;
-                generateFood();
-            }
-            moveSnake();
-            drawSnakeGame();
-        }
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft' && dx !== 1) {
-                dx = -1;
-                dy = 0;
-            } else if (e.key === 'ArrowUp' && dy !== 1) {
-                dx = 0;
-                dy = -1;
-            } else if (e.key === 'ArrowRight' && dx !== -1) {
-                dx = 1;
-                dy = 0;
-            } else if (e.key === 'ArrowDown' && dy !== -1) {
-                dx = 0;
-                dy = 1;
-            }
-        });
-
-        generateFood();
-        setInterval(snakeGameLoop, 200);
-
-        // Sri Yantra Fractal
-        const yantraCanvas = document.getElementById('yantraCanvas');
-        const yantraCtx = yantraCanvas.getContext('2d');
-        let animationId;
-
-        function drawSriYantra() {
-            const centerX = yantraCanvas.width / 2;
-            const centerY = yantraCanvas.height / 2;
-            const size = 150;
-            let angle = 0;
-
-            function animate() {
-                yantraCtx.clearRect(0, 0, yantraCanvas.width, yantraCanvas.height);
-
-                // Draw outer square
-                yantraCtx.strokeStyle = '#ff6b35';
-                yantraCtx.lineWidth = 2;
-                yantraCtx.strokeRect(centerX - size, centerY - size, size * 2, size * 2);
-
-                // Draw inner triangles
-                for (let i = 0; i < 9; i++) {
-                    const triangleSize = size * (0.9 - i * 0.08);
-                    const offset = (size - triangleSize) / 2;
-
-                    yantraCtx.beginPath();
-                    yantraCtx.moveTo(centerX, centerY - triangleSize);
-                    yantraCtx.lineTo(centerX - triangleSize, centerY + triangleSize);
-                    yantraCtx.lineTo(centerX + triangleSize, centerY + triangleSize);
-                    yantraCtx.closePath();
-
-                    const hue = (angle * 10 + i * 40) % 360;
-                    yantraCtx.strokeStyle = `hsl(${hue}, 70%, 50%)`;
-                    yantraCtx.stroke();
-
-                    // Draw inverted triangles
-                    yantraCtx.beginPath();
-                    yantraCtx.moveTo(centerX, centerY + triangleSize);
-                    yantraCtx.lineTo(centerX - triangleSize, centerY - triangleSize);
-                    yantraCtx.lineTo(centerX + triangleSize, centerY - triangleSize);
-                    yantraCtx.closePath();
-
-                    yantraCtx.strokeStyle = `hsl(${(hue + 180) % 360}, 70%, 50%)`;
-                    yantraCtx.stroke();
-                }
-
-                // Draw central point
-                yantraCtx.fillStyle = '#ff6b35';
-                yantraCtx.beginPath();
-                yantraCtx.arc(centerX, centerY, 3, 0, Math.PI * 2);
-                yantraCtx.fill();
-
-                angle += 0.01;
-                animationId = requestAnimationFrame(animate);
-            }
-
-            animate();
-        }
-
-        function animateYantra() {
-            if (animationId) {
-                cancelAnimationFrame(animationId);
-            }
-            drawSriYantra();
-        }
-
-        // Initial static drawing
-        drawSriYantra();
 
         // Touchscreen Car Racing Game
         const carCanvas = document.getElementById('gameCanvas');
