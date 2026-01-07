@@ -178,7 +178,11 @@
         </div>
         <div id="games" class="tab-content">
             <h2>Games</h2>
-            <div class="game-section">
+            <div style="margin-bottom: 30px; text-align: center;">
+                <button onclick="showCarGame()" style="padding: 10px 20px; margin: 0 10px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">🏎️ Car Racing</button>
+                <button onclick="showBallGame()" style="padding: 10px 20px; margin: 0 10px; background: #2196F3; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">⚽ Bouncing Ball</button>
+            </div>
+            <div id="carGameSection" class="game-section">
                 <h3>Touchscreen Car Racing</h3>
                 <canvas id="gameCanvas" width="400" height="600"></canvas>
                 <div id="score">Score: 0 | Lives: 3</div>
@@ -188,6 +192,23 @@
                     <button id="restartBtn">Restart</button>
                 </div>
                 <div id="instructions">Tap left/right to move! Collect golden stars for bonus points!</div>
+            </div>
+            <div id="ballGameSection" class="game-section" style="display: none;">
+                <h3>Touchscreen Bouncing Ball</h3>
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <a href="touchscreen-bouncing-ball.html" target="_blank" style="padding: 12px 24px; background: linear-gradient(45deg, #FF5722, #FF9800); color: white; text-decoration: none; border-radius: 25px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(255,87,34,0.3); transition: all 0.3s ease;">🎾 Play Full Screen</a>
+                </div>
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; text-align: center; color: white;">
+                    <h4 style="margin: 0 0 10px 0; color: #fff;">🎮 Game Features:</h4>
+                    <ul style="list-style: none; padding: 0; margin: 0; text-align: left; display: inline-block;">
+                        <li>⚽ Physics-based ball control</li>
+                        <li>⭐ Collect colorful orbs for points</li>
+                        <li>🔥 Combo multipliers (up to 10x+)</li>
+                        <li>✨ Particle effects & animations</li>
+                        <li>📱 Perfect for touchscreens</li>
+                    </ul>
+                    <p style="margin: 15px 0 0 0; font-style: italic;">Click "Play Full Screen" above to start playing!</p>
+                </div>
             </div>
         </div>
         <div id="projects" class="tab-content">
@@ -225,6 +246,16 @@
             }
             document.getElementById(tabName).classList.add("active");
             event.currentTarget.classList.add("active");
+        }
+
+        function showCarGame() {
+            document.getElementById('carGameSection').style.display = 'block';
+            document.getElementById('ballGameSection').style.display = 'none';
+        }
+
+        function showBallGame() {
+            document.getElementById('carGameSection').style.display = 'none';
+            document.getElementById('ballGameSection').style.display = 'block';
         }
 
 
