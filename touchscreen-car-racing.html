@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Touchscreen Car Racing</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #333;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        canvas {
+            border: 2px solid #FFF;
+            background-color: #000;
+            display: block;
+            margin: auto;
+        }
+        #score {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            color: #FFF;
+        }
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            display: none;
+        }
+        #gameOver h2 {
+            margin: 0;
+            font-size: 36px;
+            color: #FF0000;
+        }
+        #restartBtn {
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        #restartBtn:hover {
+            background-color: #45a049;
+        }
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            font-size: 18px;
+            color: #FFF;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="400" height="600"></canvas>
+    <div id="score">Score: 0</div>
+    <div id="gameOver">
+        <h2>Game Over!</h2>
+        <p id="finalScore"></p>
+        <button id="restartBtn">Restart</button>
+    </div>
+    <div id="instructions">Tap left to move left, right to move right!</div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const gameOverElement = document.getElementById('gameOver');
+        const finalScoreElement = document.getElementById('finalScore');
+        const restartBtn = document.getElementById('restartBtn');
+        const instructions = document.getElementById('instructions');
+
+        // Car properties
+        let car = {
+            x: canvas.width / 2 - 15,
+            y: canvas.height - 60,
+            width: 30,
+            height: 50,
+            speed: 5
+        };
+
+        // Obstacles
+        let obstacles = [];
+        const obstacleWidth = 30;
+        const obstacleHeight = 30;
+        let obstacleSpeed = 3;
+
+        // Lanes
+        const laneWidth = canvas.width / 4;
+        const lanes = [laneWidth / 2 - obstacleWidth / 2, laneWidth * 1.5 - obstacleWidth / 2, laneWidth * 2.5 - obstacleWidth / 2, laneWidth * 3.5 - obstacleWidth / 2];
+
+        // Game variables
+        let score = 0;
+        let gameRunning = true;
+        let gameStarted = false;
+        let touchStartX = 0;
+
+        // Touch event listeners
+        canvas.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            touchStartX = e.touches[0].clientX;
+            if (!gameStarted) {
+                gameStarted = true;
+                instructions.style.display = 'none';
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', function(e) {
+            if (!gameRunning) {
+                restartGame();
+                return;
+            }
+            if (!gameStarted) return;
+            const touchEndX = e.changedTouches[0].clientX;
+            const deltaX = touchEndX - touchStartX;
+            if (Math.abs(deltaX) > 50) { // Minimum swipe distance
+                if (deltaX > 0) {
+                    // Swipe right - move right
+                    moveCar('right');
+                } else {
+                    // Swipe left - move left
+                    moveCar('left');
+                }
+            }
+        }, { passive: false });
+
+        // Mouse click for desktop testing (simulate taps)
+        canvas.addEventListener('click', function(e) {
+            if (!gameStarted) {
+                gameStarted = true;
+                instructions.style.display = 'none';
+                return;
+            }
+            if (!gameRunning) {
+                restartGame();
+                return;
+            }
+            const clickX = e.clientX - canvas.getBoundingClientRect().left;
+            if (clickX < canvas.width / 2) {
+                moveCar('left');
+            } else {
+                moveCar('right');
+            }
+        });
+
+        function moveCar(direction) {
+            if (direction === 'left' && car.x > 0) {
+                car.x -= laneWidth;
+            } else if (direction === 'right' && car.x < canvas.width - car.width) {
+                car.x += laneWidth;
+            }
+        }
+
+        function drawCar() {
+            ctx.fillStyle = '#FF0000';
+            ctx.fillRect(car.x, car.y, car.width, car.height);
+            // Add wheels
+            ctx.fillStyle = '#000';
+            ctx.fillRect(car.x - 5, car.y + 10, 10, 15);
+            ctx.fillRect(car.x + car.width - 5, car.y + 10, 10, 15);
+            ctx.fillRect(car.x - 5, car.y + car.height - 25, 10, 15);
+            ctx.fillRect(car.x + car.width - 5, car.y + car.height - 25, 10, 15);
+        }
+
+        function drawObstacles() {
+            ctx.fillStyle = '#FFFF00';
+            obstacles.forEach(obstacle => {
+                ctx.fillRect(obstacle.x, obstacle.y, obstacleWidth, obstacleHeight);
+            });
+        }
+
+        function drawRoad() {
+            // Road background
+            ctx.fillStyle = '#444';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Lane markings
+            ctx.fillStyle = '#FFF';
+            for (let i = 1; i < 4; i++) {
+                ctx.fillRect(i * laneWidth - 2, 0, 4, canvas.height);
+            }
+
+            // Moving dashes
+            ctx.fillStyle = '#FFF';
+            const dashHeight = 20;
+            const dashSpacing = 40;
+            const offset = (Date.now() / 10) % (dashHeight + dashSpacing);
+            for (let i = 1; i < 4; i++) {
+                for (let y = -offset; y < canvas.height; y += dashHeight + dashSpacing) {
+                    if (y + dashHeight > 0) {
+                        ctx.fillRect(i * laneWidth - 2, y, 4, Math.min(dashHeight, canvas.height - y));
+                    }
+                }
+            }
+        }
+
+        function updateObstacles() {
+            obstacles.forEach(obstacle => {
+                obstacle.y += obstacleSpeed;
+
+                // Check collision with car
+                if (obstacle.y + obstacleHeight > car.y &&
+                    obstacle.y < car.y + car.height &&
+                    obstacle.x + obstacleWidth > car.x &&
+                    obstacle.x < car.x + car.width) {
+                    gameOver();
+                }
+            });
+
+            // Remove off-screen obstacles and increment score
+            obstacles = obstacles.filter(obstacle => {
+                if (obstacle.y > canvas.height) {
+                    score += 10;
+                    scoreElement.textContent = `Score: ${score}`;
+                    return false;
+                }
+                return true;
+            });
+
+            // Add new obstacle
+            if (Math.random() < 0.02) { // 2% chance per frame
+                const lane = Math.floor(Math.random() * 4);
+                obstacles.push({
+                    x: lanes[lane],
+                    y: -obstacleHeight
+                });
+            }
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            finalScoreElement.textContent = `Final Score: ${score}`;
+            gameOverElement.style.display = 'block';
+        }
+
+        function restartGame() {
+            car.x = canvas.width / 2 - 15;
+            obstacles = [];
+            score = 0;
+            scoreElement.textContent = `Score: ${score}`;
+            gameRunning = true;
+            gameStarted = false;
+            gameOverElement.style.display = 'none';
+            instructions.style.display = 'block';
+        }
+
+        function gameLoop() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawRoad();
+
+            if (gameRunning && gameStarted) {
+                updateObstacles();
+                // Increase speed over time
+                obstacleSpeed += 0.001;
+            }
+
+            drawObstacles();
+            drawCar();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start the game loop
+        gameLoop();
+
+        // Restart button
+        restartBtn.addEventListener('click', restartGame);
+    </script>
+</body>
+</html>
