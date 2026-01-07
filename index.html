@@ -240,13 +240,14 @@
 
         // Car properties
         let carObj = {
-            x: carCanvas.width / 2 - 15,
+            x: carLaneCenters[1] - 15, // Start in lane 1 (middle-left)
             y: carCanvas.height - 60,
             width: 30,
             height: 50,
             speed: 5,
             colorHue: 0
         };
+        let carCurrentLane = 1; // Track which lane the car is in
 
         // Obstacles
         let carObstacles = [];
@@ -257,7 +258,8 @@
 
         // Lanes
         const carLaneWidth = carCanvas.width / 4;
-        const carLanes = [carLaneWidth / 2 - carObstacleWidth / 2, carLaneWidth * 1.5 - carObstacleWidth / 2, carLaneWidth * 2.5 - carObstacleWidth / 2, carLaneWidth * 3.5 - carObstacleWidth / 2];
+        const carLaneCenters = [carLaneWidth / 2, carLaneWidth * 1.5, carLaneWidth * 2.5, carLaneWidth * 3.5];
+        const carLanes = [carLaneCenters[0] - carObstacleWidth / 2, carLaneCenters[1] - carObstacleWidth / 2, carLaneCenters[2] - carObstacleWidth / 2, carLaneCenters[3] - carObstacleWidth / 2];
 
         // Game variables
         let carScore = 0;
@@ -316,10 +318,12 @@
         });
 
         function carMoveCar(direction) {
-            if (direction === 'left' && carObj.x > 0) {
-                carObj.x -= carLaneWidth;
-            } else if (direction === 'right' && carObj.x < carCanvas.width - carObj.width) {
-                carObj.x += carLaneWidth;
+            if (direction === 'left' && carCurrentLane > 0) {
+                carCurrentLane--;
+                carObj.x = carLaneCenters[carCurrentLane] - carObj.width / 2;
+            } else if (direction === 'right' && carCurrentLane < 3) {
+                carCurrentLane++;
+                carObj.x = carLaneCenters[carCurrentLane] - carObj.width / 2;
             }
         }
 
@@ -493,7 +497,8 @@
         }
 
         function carRestartGame() {
-            carObj.x = carCanvas.width / 2 - 15;
+            carCurrentLane = 1;
+            carObj.x = carLaneCenters[carCurrentLane] - carObj.width / 2;
             carObj.colorHue = 0;
             carObstacles = [];
             carScore = 0;
