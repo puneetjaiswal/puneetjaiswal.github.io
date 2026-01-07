@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Touchscreen Bouncing Ball</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        canvas {
+            border: 3px solid #fff;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            display: block;
+            margin: auto;
+            box-shadow: 0 0 20px rgba(255,255,255,0.3);
+        }
+        #score {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            color: #fff;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            display: none;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #fff;
+        }
+        #gameOver h2 {
+            margin: 0 0 10px 0;
+            font-size: 36px;
+            color: #ff4757;
+        }
+        #finalScore {
+            color: #fff;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        #restartBtn {
+            padding: 12px 24px;
+            font-size: 18px;
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+        #restartBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        }
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            font-size: 16px;
+            color: #fff;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+        }
+        #multiplier {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 20px;
+            color: #f39c12;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="400" height="600"></canvas>
+    <div id="score">Score: 0</div>
+    <div id="multiplier">Combo: 1x</div>
+    <div id="gameOver">
+        <h2>Game Over!</h2>
+        <p id="finalScore"></p>
+        <button id="restartBtn">Play Again</button>
+    </div>
+    <div id="instructions">Tap to bounce the ball and collect points!</div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const multiplierElement = document.getElementById('multiplier');
+        const gameOverElement = document.getElementById('gameOver');
+        const finalScoreElement = document.getElementById('finalScore');
+        const restartBtn = document.getElementById('restartBtn');
+        const instructions = document.getElementById('instructions');
+
+        // Ball properties
+        let ball = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            radius: 12,
+            dx: 4,
+            dy: -4,
+            color: '#e74c3c'
+        };
+
+        // Collectibles
+        let collectibles = [];
+        const collectibleRadius = 8;
+
+        // Particle effects
+        let particles = [];
+
+        // Game variables
+        let score = 0;
+        let combo = 1;
+        let gameRunning = true;
+        let gameStarted = false;
+        let lastCollectTime = 0;
+
+        // Touch handling
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        canvas.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            if (!gameStarted) {
+                gameStarted = true;
+                instructions.style.display = 'none';
+                return;
+            }
+            if (!gameRunning) {
+                restartGame();
+                return;
+            }
+
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+
+            // Bounce ball in direction of touch
+            const rect = canvas.getBoundingClientRect();
+            const touchX = touchStartX - rect.left;
+            const touchY = touchStartY - rect.top;
+
+            // Calculate direction from ball to touch point
+            const dx = touchX - ball.x;
+            const dy = touchY - ball.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance > 0) {
+                // Set ball velocity towards touch point with some speed
+                const speed = Math.min(distance / 20, 8); // Cap maximum speed
+                ball.dx = (dx / distance) * speed;
+                ball.dy = (dy / distance) * speed;
+            }
+
+            // Add particle effect at touch point
+            createParticles(touchX, touchY, '#3498db', 8);
+        }, { passive: false });
+
+        // Mouse support for desktop
+        canvas.addEventListener('click', function(e) {
+            if (!gameStarted) {
+                gameStarted = true;
+                instructions.style.display = 'none';
+                return;
+            }
+            if (!gameRunning) {
+                restartGame();
+                return;
+            }
+
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+
+            // Calculate direction from ball to click point
+            const dx = clickX - ball.x;
+            const dy = clickY - ball.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance > 0) {
+                const speed = Math.min(distance / 20, 8);
+                ball.dx = (dx / distance) * speed;
+                ball.dy = (dy / distance) * speed;
+            }
+
+            createParticles(clickX, clickY, '#3498db', 8);
+        });
+
+        function createParticles(x, y, color, count) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    life: 30,
+                    color: color,
+                    size: Math.random() * 4 + 2
+                });
+            }
+        }
+
+        function drawBall() {
+            // Ball glow effect
+            ctx.shadowColor = ball.color;
+            ctx.shadowBlur = 15;
+            ctx.fillStyle = ball.color;
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Ball inner highlight
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(ball.x - 3, ball.y - 3, ball.radius / 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawCollectibles() {
+            collectibles.forEach(collectible => {
+                // Glow effect
+                ctx.shadowColor = collectible.color;
+                ctx.shadowBlur = 10;
+
+                ctx.fillStyle = collectible.color;
+                ctx.beginPath();
+                ctx.arc(collectible.x, collectible.y, collectibleRadius, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Inner sparkle
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(collectible.x - 2, collectible.y - 2, 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.shadowBlur = 0;
+            });
+        }
+
+        function drawParticles() {
+            particles.forEach((particle, index) => {
+                particle.x += particle.vx;
+                particle.y += particle.vy;
+                particle.vx *= 0.98; // Friction
+                particle.vy *= 0.98;
+                particle.life--;
+
+                if (particle.life <= 0) {
+                    particles.splice(index, 1);
+                    return;
+                }
+
+                const alpha = particle.life / 30;
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = particle.color;
+                ctx.beginPath();
+                ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+        }
+
+        function updateBall() {
+            ball.x += ball.dx;
+            ball.y += ball.dy;
+
+            // Bounce off walls
+            if (ball.x - ball.radius <= 0 || ball.x + ball.radius >= canvas.width) {
+                ball.dx = -ball.dx;
+                ball.x = Math.max(ball.radius, Math.min(canvas.width - ball.radius, ball.x));
+                createParticles(ball.x, ball.y, '#e74c3c', 5);
+            }
+            if (ball.y - ball.radius <= 0) {
+                ball.dy = -ball.dy;
+                ball.y = ball.radius;
+                createParticles(ball.x, ball.y, '#e74c3c', 5);
+            }
+
+            // Game over if ball hits bottom
+            if (ball.y + ball.radius >= canvas.height) {
+                gameOver();
+            }
+        }
+
+        function updateCollectibles() {
+            collectibles.forEach((collectible, index) => {
+                // Check collision with ball
+                const dx = ball.x - collectible.x;
+                const dy = ball.y - collectible.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < ball.radius + collectibleRadius) {
+                    // Collect the item
+                    score += 10 * combo;
+                    combo++;
+                    lastCollectTime = Date.now();
+                    scoreElement.textContent = `Score: ${score}`;
+                    multiplierElement.textContent = `Combo: ${combo}x`;
+
+                    // Particles and effects
+                    createParticles(collectible.x, collectible.y, collectible.color, 12);
+
+                    // Remove collected item
+                    collectibles.splice(index, 1);
+
+                    // Change ball color briefly
+                    ball.color = collectible.color;
+                    setTimeout(() => { ball.color = '#e74c3c'; }, 200);
+
+                    return;
+                }
+            });
+
+            // Reset combo if too much time passes
+            if (Date.now() - lastCollectTime > 3000) {
+                combo = Math.max(1, combo - 1);
+                multiplierElement.textContent = `Combo: ${combo}x`;
+            }
+        }
+
+        function spawnCollectible() {
+            if (Math.random() < 0.02 && collectibles.length < 5) { // 2% chance, max 5 collectibles
+                const colors = ['#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#3498db'];
+                collectibles.push({
+                    x: Math.random() * (canvas.width - 40) + 20,
+                    y: Math.random() * (canvas.height / 2) + 50, // Only in upper half
+                    color: colors[Math.floor(Math.random() * colors.length)]
+                });
+            }
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            finalScoreElement.textContent = `Final Score: ${score}`;
+            gameOverElement.style.display = 'block';
+        }
+
+        function restartGame() {
+            ball.x = canvas.width / 2;
+            ball.y = canvas.height / 2;
+            ball.dx = 4;
+            ball.dy = -4;
+            ball.color = '#e74c3c';
+            collectibles = [];
+            particles = [];
+            score = 0;
+            combo = 1;
+            scoreElement.textContent = `Score: ${score}`;
+            multiplierElement.textContent = `Combo: ${combo}x`;
+            gameRunning = true;
+            gameStarted = false;
+            gameOverElement.style.display = 'none';
+            instructions.style.display = 'block';
+            lastCollectTime = 0;
+        }
+
+        function gameLoop() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (gameRunning && gameStarted) {
+                updateBall();
+                updateCollectibles();
+                spawnCollectible();
+            }
+
+            drawCollectibles();
+            drawParticles();
+            drawBall();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start the game loop
+        gameLoop();
+
+        // Restart button
+        restartBtn.addEventListener('click', restartGame);
+    </script>
+</body>
+</html>
